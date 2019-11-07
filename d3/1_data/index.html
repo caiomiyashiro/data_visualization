@@ -1,0 +1,71 @@
+<html>
+    <head>
+        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    </head>
+    <body>
+        <div style="display: flex;">
+            <div style="display: flex;">
+                <div>
+                    <label for="name">Name:</label>
+                    <input type="text" id='str_name' name="name">
+                </div>
+                <div>
+                    <label for="age">Age:</label>
+                    <input type="text" id='str_age' name="age">
+                </div>
+            </div>
+
+            <input type="button" value="submit" onclick="add_entry()">
+            <input type="button" value="remove" onclick="remove_entry()">
+            <p id="number_people" style="padding-left: 10px;">People: 0</p>
+            <p id="mean_age" style="padding-left: 10px;">Mean Age: NA</p>
+        </div>
+        
+        <div id="all_names"></div>
+    </body>
+
+    <script>
+    
+        let container = d3.select("#all_names")
+        let clients = []
+
+        let clients_mean_age = 0 
+        let clients_count = 0
+
+
+        function add_entry(){
+            let name = d3.select("#str_name").node().value
+            let age = d3.select("#str_age").node().value
+            
+            let client = {"name": name, "age": age}
+
+            clients.push(client)
+            recalc_stats()
+            write_clients(clients)
+        }
+
+        function remove_entry(){
+            clients = clients.slice(0,-1)
+            recalc_stats()
+            write_clients(clients)
+        }
+
+        function recalc_stats(){
+            clients_mean_age =  d3.mean(clients, function(cl){
+                return cl.age
+            })
+            clients_count =  clients.length
+        }
+
+        function write_clients(clients){
+            let join = container.selectAll("div").data(clients)
+            join.enter().append("div").text(cl => cl.name +" - "+cl.age)
+            join.exit().remove("div")
+
+            d3.select("#number_people").text("People: "+clients_count)
+            d3.select("#mean_age").text("Mean Age: "+clients_mean_age)
+        }
+
+        write_clients(clients)
+    </script>
+</html>

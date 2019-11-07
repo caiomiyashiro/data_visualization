@@ -1,0 +1,35 @@
+<html>
+    <head>
+        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    </head>
+    <body>
+        <H1 id="header">Header</H1>>
+        <ul>
+        </ul>
+        <button onclick="add_animal('img/dog.jpg')">Add Dog</button>
+        <button onclick="add_animal('img/cat.jpg')">Add Cat</button>
+        <p id="list_size">List contains 0 animals</p>
+    </body>
+
+
+    <script>
+        let item_list = d3.select("ul")
+
+        function update_list_size(){
+            list_size = item_list.selectAll("li")
+            d3.select("#list_size").text("List contains "+list_size.size()+" animals")
+        }
+
+
+        function add_animal(file_name){
+            item_list.append("li")
+                .append("img")
+                .attr({
+                    "src": file_name,
+                    "width": 100,
+                    "height": 100
+                })
+            update_list_size()
+        }
+    </script>
+</html>

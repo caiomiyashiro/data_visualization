@@ -1,0 +1,67 @@
+<html>
+    <head>
+        <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    </head>
+    <body>        
+        <svg id="container">
+            <g id="body"></g>
+            <g id="x_axis"></g>
+            <g id="y_axis"></g>   
+        </svg>
+    </body>
+
+    <script>
+
+        const canvas_height = 400
+        const canvas_width = 500
+        
+        const plot_height = canvas_height-50
+        const plot_width = canvas_width - 50
+        const x_translate = canvas_width * 0.1
+
+        let canvas = d3.select("#body")
+        canvas.attr("transform", "translate("+x_translate+", 0)")
+
+        let container = d3.select("#container")
+        container.attr("height", canvas_height)
+                 .attr("width", canvas_width)
+                 
+
+        d3.csv("clients.csv", function (clients){
+            draw_data(clients)
+        })
+        
+        function draw_data(clients){
+
+            let max_age = d3.max(clients, elem => elem.Age)
+            console.log(clients[0])
+            let age_scale = d3.scaleLinear()
+                .domain([0, max_age])
+                .range([0, plot_width])
+
+            let name_scale = d3.scaleBand()   
+                .domain(clients.map(elem => elem.Name))
+                .range([0,plot_height])
+                .padding(0.3)
+
+            let join = canvas.selectAll("rect").data(clients)
+            join.enter()
+                .append("rect")
+                .attr("fill", "blue")
+                .attr("height", name_scale.bandwidth())
+                .attr("width", d => age_scale(d.Age))
+                .attr("y", d => name_scale(d.Name))
+
+            let x_axis = d3.axisBottom(age_scale)
+            d3.select("#x_axis")
+                .attr("transform", "translate("+x_translate+", "+plot_height+")")
+                .call(x_axis)
+
+            let y_axis = d3.axisLeft(name_scale)
+            d3.select("#y_axis")
+                .attr("transform", "translate("+x_translate+", 0)")
+                .call(y_axis)
+
+        }
+    </script>
+</html>

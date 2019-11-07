@@ -1,0 +1,75 @@
+<html>
+
+<head>
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    
+</head>
+
+<body>
+    <svg id="svg1">
+        <g id="pie"></g>
+    </svg>       
+
+</body>
+
+    <script>
+            
+
+        const svg_height = 400
+        const svg_width = 600
+        const plot_y_translate = svg_height/2
+        const plot_x_translate = svg_width/2
+        const plot_border = 0
+
+        const plot_height = svg_height - plot_border
+        const plot_width = svg_width - plot_border - plot_x_translate
+
+        const ARC_OUTER_RADIUS = plot_height/2
+        const ARC_INNER_RADIUS = 100
+
+        // -----------------------------------------------------------
+        
+
+        let svgs = d3.selectAll("svg")
+        svgs
+            .attr("height", svg_height)
+            .attr("width", svg_width)
+
+        let plot = d3.select("#pie")
+        plot
+            .attr("height", plot_height)
+            .attr("width", plot_width)
+            .attr("transform", "translate("+plot_x_translate+","+plot_y_translate+")")
+
+        d3.csv('data.csv').then(function(countries){
+
+            countries = countries.map(d => ({
+                country: d.country,
+                sales: +d.sales
+            }))
+
+            draw_radius_plots(countries)
+        })
+
+        function draw_radius_plots(countries){
+
+            let pie = d3.pie().value(d => d.sales)
+
+            let color_scale = d3.scaleOrdinal()
+                                .domain(countries.map(d => d.country))
+                                .range(d3.schemeCategory10)
+            
+            let arc = d3.arc().outerRadius(ARC_OUTER_RADIUS).innerRadius(ARC_INNER_RADIUS)
+            
+            d3.select("#pie").selectAll("path")
+                .data(pie(countries))
+                .enter()
+                .append("path")
+                .attr("d", arc)
+                .attr("fill", d => color_scale(d.data.country))
+                
+        }
+
+    </script>
+
+</html>

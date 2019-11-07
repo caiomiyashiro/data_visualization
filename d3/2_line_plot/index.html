@@ -1,0 +1,97 @@
+<html>
+
+<head>
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif
+        }
+
+        h1 {
+            background-color: #2a5599;
+            color: white;
+            padding: 5px;
+        }
+
+        svg {
+            border: 1px solid black;
+        }
+
+        .mainView {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <svg id="s">
+        <path id="plot"></path>
+        <g id="x_axis"></g>
+        <g id="y_axis"></g>
+    </svg>
+    <p id="p"></p>
+</body>
+
+    <script>
+
+        const svg_height = 400
+        const svg_width = 600
+        const plot_x_translate = 50
+        const plot_border = 50
+        const plot_height = svg_height - plot_border
+        const plot_width = svg_width - plot_border - plot_x_translate
+
+        let svg = d3.select("#s")
+        svg
+            .attr("height", svg_height)
+            .attr("width", svg_width)
+        let plot = d3.select("#plot")
+        plot
+            .attr("height", plot_height)
+            .attr("width", plot_width)
+            .attr("transform", "translate("+plot_x_translate+")")
+
+        d3.csv('data.csv').then(function(prices){
+
+            prices = prices.map(d => ({
+                date: new Date(d.date),
+                price: +d.price
+            }))
+
+            draw_lineplot(prices)
+        })
+
+        function draw_lineplot(prices){
+
+            max_price = d3.max(prices, d => d.price)
+            x_scale = d3.scaleTime()
+                            .domain(d3.extent(prices, d => d.date))
+                            .range([0, plot_width])
+            y_scale = d3.scaleLinear()
+                            .domain([0, max_price])
+                            .range([plot_height, 0])
+
+            value_line = d3.line()
+                    .x(d => x_scale(d.date))
+                    .y(d => y_scale(d.price))
+                    .defined(d => !!d.price)
+            plot
+                .datum(prices)
+                .attr("d", d => value_line(d))
+                .attr("fill", "none")
+                .attr("stroke", "blue")
+
+            
+
+            d3.select("#x_axis")
+                .attr("transform", "translate("+plot_x_translate+", "+plot_height+")")
+                .call(d3.axisBottom(x_scale).tickFormat(d3.timeFormat("%b")))
+
+            d3.select("#y_axis")
+                .attr("transform", "translate("+plot_x_translate+", 0)")
+                .call(d3.axisLeft(y_scale))
+        }
+
+    </script>
+
+</html>

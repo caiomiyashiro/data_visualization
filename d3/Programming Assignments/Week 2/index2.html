@@ -1,0 +1,60 @@
+<html>
+
+<head>
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif
+        }
+
+        h1 {
+            background-color: #2a5599;
+            color: white;
+            padding: 5px;
+        }
+
+        svg {
+            border: 1px solid black;
+        }
+
+        .mainView {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Airlines Routes</h1>
+    <div class="mainView">
+        <div>
+            <h2>Airlines</h2>
+            <svg id="AirlinesChart"></svg>
+        </div>
+        <div>
+            <h2>Airports</h2>
+            <svg id="Map"></svg>
+        </div>
+    </div>
+    <p id="p"></p>
+</body>
+
+    <script>
+        d3.csv('routes.csv').then(function(routes){
+            let count_by_id = d3.nest()
+                .key(function(d){return d.AirlineName})
+                .rollup(function(d){return {Count: d.length, AirlineId: d[0].AirlineID}})
+                .entries(routes)
+                .map(function(group){
+                    return {
+                        AirlineName: group.key,
+                        AirlineID: +group.value.AirlineId,
+                        Count: group.value.Count
+                    }
+                })
+                .sort(function (a,b){return d3.descending(a.Count, b.Count)})
+            console.log(count_by_id)
+        })
+
+    </script>
+
+</html>

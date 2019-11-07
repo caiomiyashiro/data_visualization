@@ -1,0 +1,154 @@
+<html>
+
+<head>
+    <script src="http://d3js.org/d3.v5.min.js" charset="utf-8"></script>
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif
+        }
+
+        h1 {
+            background-color: #2a5599;
+            color: white;
+            padding: 5px;
+        }
+
+        svg {
+            border: 1px solid black;
+        }
+
+        .mainView {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Airlines Routes</h1>
+    <div class="mainView">
+        <div>
+            <h2>Airlines</h2>
+            <svg id="AirlinesSvg">
+                <g id="plot"></g>
+                <g id="x_axis"></g>
+                <g id="y_axis"></g>
+            </svg>
+        </div>
+        <div>
+            <h2>Airports</h2>
+            <svg id="Map"></svg>
+        </div>
+    </div>
+    <p id="p"></p>
+</body>
+
+    <script>
+
+        const svg_height = 400
+        const svg_width = 650
+        const plot_x_translate = 120
+        const plot_border = 50
+        const plot_height = svg_height - plot_border
+        const plot_width = svg_width - plot_border - plot_x_translate
+
+        let svg = d3.selectAll("svg")
+        svg
+            .attr("height", svg_height)
+            .attr("width", svg_width)
+        let plot = d3.select("#plot")
+        plot
+            .attr("height", plot_height)
+            .attr("width", plot_width)
+            .attr("transform", "translate("+plot_x_translate+")")
+
+        Promise.all([
+            d3.csv('routes.csv'),
+            d3.json('countries.geo.json')
+        ]).then(draw_plots)
+
+        function groupby_count(routes){
+            let count_by_id = d3.nest()
+                .key(function(d){return d.AirlineName})
+                .rollup(function(d){return {Count: d.length, AirlineId: d[0].AirlineID}})
+                .entries(routes)
+                .map(function(group){
+                    return {
+                        AirlineName: group.key,
+                        AirlineID: +group.value.AirlineId,
+                        Count: group.value.Count
+                    }
+                })
+                .sort(function (a,b){return d3.descending(a.Count, b.Count)})
+            return count_by_id        
+        }
+
+        function draw_bar(routes){
+
+            let count_by_id = groupby_count(routes)
+
+            max_count = d3.max(count_by_id, d => d.Count)
+            count_scale = d3.scaleLinear()
+                            .domain([0, max_count])
+                            .range([0, plot_width])
+            company_scale = d3.scaleBand()
+                            .domain(count_by_id.map(d => d.AirlineName))
+                            .range([0, plot_height])
+                            .padding(0.2)
+
+            let join = plot.selectAll("rect").data(count_by_id)
+            join.enter()
+                .append("rect")
+                .attr("fill", "blue")
+                .attr("height", company_scale.bandwidth())
+                .attr("width", d => count_scale(d.Count))
+                .attr("y", d => company_scale(d.AirlineName))
+
+            let x_axis_vis = d3.axisBottom(count_scale).ticks(5)
+            d3.select("#x_axis")
+                .attr("transform", "translate("+plot_x_translate+", "+plot_height+")")
+                .call(x_axis_vis)
+
+            let middle_x_axis = (count_scale(max_count)/2) + plot_x_translate
+            d3.select("#AirlinesSvg").append("text")             
+                .attr("transform",
+                        "translate(" + middle_x_axis + " ," + 
+                                    (plot_height + 35) + ")")
+                .style("text-anchor", "middle")
+                .text("Count")
+
+            let y_axis_vis = d3.axisLeft(company_scale)
+            d3.select("#y_axis")
+                .attr("transform", "translate("+plot_x_translate+", 0)")
+                .call(y_axis_vis)
+        }
+
+        function draw_map(maps){
+            let projection = d3.geoMercator()
+                                .scale(97) // zoom
+                                .translate([svg_width/2, (svg_height/2)+20])
+            let path = d3.geoPath().projection(projection)
+
+            d3.select("#Map")
+                .selectAll("path")
+                .data(maps.features)
+                .enter()
+                .append("path")
+                .attr("d", d => path(d))
+                .attr("fill", "#eee")
+                .attr("stroke", "#ccc")
+
+
+            
+        }
+
+        function draw_plots(datasets){
+            let routes = datasets[0]
+            let maps = datasets[1]
+
+            draw_bar(routes)
+            draw_map(maps)
+        }
+
+    </script>
+
+</html>
